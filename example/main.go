@@ -1,19 +1,3 @@
-# Promise4G
-
-Promise4G is a Go library that provides a promise-like abstraction for handling asynchronous computations.
-
-## Installation
-
-To install Promise4G, use `go get`:
-
-```sh
-go get github.com/hoanguyenkh/promise4g
-```
-
-## Usage
-
-Here's a simple example to demonstrate how to use Promise4G:
-```go
 package main
 
 import (
@@ -49,8 +33,3 @@ func main() {
 		fmt.Println("Results:", results)
 	}
 }
-
-```
-
-## Referer
- 1) https://github.com/chebyrash/promise
