@@ -37,7 +37,7 @@ func fakeHttp2(url string) (httpResponse2, error) {
 
 func main() {
 	ctx := context.Background()
-	p1 := promise4g.New(ctx, func(resolve func(any), reject func(error)) {
+	p1 := promise4g.New(func(resolve func(any), reject func(error)) {
 		resp1, err := fakeHttp1("fakeHttp1")
 		if err != nil {
 			reject(err)
@@ -46,7 +46,7 @@ func main() {
 		}
 	})
 
-	p2 := promise4g.New(ctx, func(resolve func(any), reject func(error)) {
+	p2 := promise4g.New(func(resolve func(any), reject func(error)) {
 		resp1, err := fakeHttp2("fakeHttp2")
 		if err != nil {
 			reject(err)

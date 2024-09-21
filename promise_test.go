@@ -16,7 +16,7 @@ import (
 func TestPromise_One(t *testing.T) {
 	t.Run("Happy", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(string), reject func(error)) {
+		p := New(func(resolve func(string), reject func(error)) {
 			resolve("one")
 		})
 		result, err := p.Await(ctx)
@@ -26,7 +26,7 @@ func TestPromise_One(t *testing.T) {
 
 	t.Run("Reject", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(string), reject func(error)) {
+		p := New(func(resolve func(string), reject func(error)) {
 			reject(errors.New("error"))
 		})
 		_, err := p.Await(ctx)
@@ -35,7 +35,7 @@ func TestPromise_One(t *testing.T) {
 
 	t.Run("Panic", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(string), reject func(error)) {
+		p := New(func(resolve func(string), reject func(error)) {
 			panic(errors.New("panic"))
 		})
 		_, err := p.Await(ctx)
@@ -45,7 +45,7 @@ func TestPromise_One(t *testing.T) {
 
 	t.Run("MultipleResolves", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(string), reject func(error)) {
+		p := New(func(resolve func(string), reject func(error)) {
 			resolve("one")
 			resolve("two") // This should be ignored
 		})
@@ -56,7 +56,7 @@ func TestPromise_One(t *testing.T) {
 
 	t.Run("MultipleRejects", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(string), reject func(error)) {
+		p := New(func(resolve func(string), reject func(error)) {
 			reject(errors.New("first error"))
 			reject(errors.New("second error")) // This should be ignored
 		})
@@ -69,15 +69,15 @@ func TestPromise_One(t *testing.T) {
 func TestPromise_All(t *testing.T) {
 	t.Run("AllHappy", func(t *testing.T) {
 		ctx := context.Background()
-		p1 := New(ctx, func(resolve func(string), reject func(error)) {
+		p1 := New(func(resolve func(string), reject func(error)) {
 			resolve("one")
 		})
 
-		p2 := New(ctx, func(resolve func(string), reject func(error)) {
+		p2 := New(func(resolve func(string), reject func(error)) {
 			resolve("two")
 		})
 
-		p3 := New(ctx, func(resolve func(string), reject func(error)) {
+		p3 := New(func(resolve func(string), reject func(error)) {
 			resolve("five")
 		})
 		p := All(ctx, p1, p2, p3)
@@ -88,15 +88,15 @@ func TestPromise_All(t *testing.T) {
 
 	t.Run("AllContainReject", func(t *testing.T) {
 		ctx := context.Background()
-		p1 := New(ctx, func(resolve func(string), reject func(error)) {
+		p1 := New(func(resolve func(string), reject func(error)) {
 			resolve("one")
 		})
 
-		p2 := New(ctx, func(resolve func(string), reject func(error)) {
+		p2 := New(func(resolve func(string), reject func(error)) {
 			resolve("two")
 		})
 
-		p3 := New(ctx, func(resolve func(string), reject func(error)) {
+		p3 := New(func(resolve func(string), reject func(error)) {
 			reject(errors.New("error"))
 		})
 		p := All(ctx, p1, p2, p3)
@@ -109,12 +109,12 @@ func TestPromise_All(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		p1 := New(ctx, func(resolve func(int), reject func(error)) {
+		p1 := New(func(resolve func(int), reject func(error)) {
 			time.Sleep(100 * time.Millisecond)
 			resolve(1)
 		})
 
-		p2 := New(ctx, func(resolve func(int), reject func(error)) {
+		p2 := New(func(resolve func(int), reject func(error)) {
 			time.Sleep(200 * time.Millisecond)
 			resolve(2)
 		})
@@ -132,11 +132,11 @@ func TestPromise_All(t *testing.T) {
 
 	t.Run("AllMixedResolveReject", func(t *testing.T) {
 		ctx := context.Background()
-		p1 := New(ctx, func(resolve func(string), reject func(error)) {
+		p1 := New(func(resolve func(string), reject func(error)) {
 			resolve("one")
 		})
 
-		p2 := New(ctx, func(resolve func(string), reject func(error)) {
+		p2 := New(func(resolve func(string), reject func(error)) {
 			reject(errors.New("error"))
 		})
 
@@ -150,12 +150,12 @@ func TestPromise_All(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 		defer cancel()
 
-		p1 := New(ctx, func(resolve func(int), reject func(error)) {
+		p1 := New(func(resolve func(int), reject func(error)) {
 			time.Sleep(100 * time.Millisecond)
 			resolve(1)
 		})
 
-		p2 := New(ctx, func(resolve func(int), reject func(error)) {
+		p2 := New(func(resolve func(int), reject func(error)) {
 			time.Sleep(200 * time.Millisecond)
 			resolve(2)
 		})
@@ -170,7 +170,7 @@ func TestPromise_All(t *testing.T) {
 func TestPromise_Then(t *testing.T) {
 	t.Run("ThenSuccess", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(int), reject func(error)) {
+		p := New(func(resolve func(int), reject func(error)) {
 			resolve(1)
 		})
 
@@ -185,7 +185,7 @@ func TestPromise_Then(t *testing.T) {
 
 	t.Run("ThenFailure", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(int), reject func(error)) {
+		p := New(func(resolve func(int), reject func(error)) {
 			reject(errors.New("initial error"))
 		})
 
@@ -200,7 +200,7 @@ func TestPromise_Then(t *testing.T) {
 
 	t.Run("ThenSuccessButThenPromiseError", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(int), reject func(error)) {
+		p := New(func(resolve func(int), reject func(error)) {
 			resolve(1)
 		})
 
@@ -218,7 +218,7 @@ func TestPromise_Then(t *testing.T) {
 func TestPromise_Catch(t *testing.T) {
 	t.Run("CatchNoError", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(int), reject func(error)) {
+		p := New(func(resolve func(int), reject func(error)) {
 			resolve(1)
 		})
 
@@ -233,7 +233,7 @@ func TestPromise_Catch(t *testing.T) {
 
 	t.Run("CatchSuccess", func(t *testing.T) {
 		ctx := context.Background()
-		p := New(ctx, func(resolve func(int), reject func(error)) {
+		p := New(func(resolve func(int), reject func(error)) {
 			reject(errors.New("initial error"))
 		})
 
@@ -277,7 +277,7 @@ func TestNewWithPool(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			p := NewWithPool(ctx, func(resolve func(string), reject func(error)) {
+			p := NewWithPool(func(resolve func(string), reject func(error)) {
 				resolve(test.name)
 			}, test.pool)
 
@@ -294,17 +294,17 @@ func TestCheckAllConcurrent(t *testing.T) {
 	ctx := context.Background()
 	start := time.Now()
 
-	p1 := New(ctx, func(resolve func(string), reject func(error)) {
+	p1 := New(func(resolve func(string), reject func(error)) {
 		time.Sleep(100 * time.Millisecond)
 		resolve("one")
 	})
 
-	p2 := New(ctx, func(resolve func(string), reject func(error)) {
+	p2 := New(func(resolve func(string), reject func(error)) {
 		time.Sleep(200 * time.Millisecond)
 		resolve("two")
 	})
 
-	p3 := New(ctx, func(resolve func(string), reject func(error)) {
+	p3 := New(func(resolve func(string), reject func(error)) {
 		time.Sleep(300 * time.Millisecond)
 		resolve("three")
 	})
@@ -349,7 +349,7 @@ func BenchmarkNewWithPool(b *testing.B) {
 	for _, test := range tests {
 		b.Run(test.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				p := NewWithPool(ctx, func(resolve func(string), reject func(error)) {
+				p := NewWithPool(func(resolve func(string), reject func(error)) {
 					resolve(test.name)
 				}, test.pool)
 

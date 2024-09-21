@@ -8,7 +8,6 @@ import (
 
 // Promise represents a computation that will eventually be completed with a value of type T or an error.
 type Promise[T any] struct {
-	ctx   context.Context
 	value T
 	err   error
 	ch    chan struct{}
@@ -16,13 +15,11 @@ type Promise[T any] struct {
 }
 
 func New[T any](
-	ctx context.Context,
 	task func(resolve func(T), reject func(error))) *Promise[T] {
-	return NewWithPool(ctx, task, defaultPool)
+	return NewWithPool(task, defaultPool)
 }
 
 func NewWithPool[T any](
-	ctx context.Context,
 	task func(resolve func(T), reject func(error)),
 	pool Pool) *Promise[T] {
 	if task == nil {
@@ -33,7 +30,6 @@ func NewWithPool[T any](
 	}
 	var t T
 	p := &Promise[T]{
-		ctx:   ctx,
 		value: t,
 		err:   nil,
 		ch:    make(chan struct{}),
@@ -99,7 +95,7 @@ func AllWithPool[T any](
 		panic("missing promises")
 	}
 
-	return NewWithPool(ctx, func(resolve func([]T), reject func(error)) {
+	return NewWithPool(func(resolve func([]T), reject func(error)) {
 		resultsChan := make(chan tuple[T, int], len(promises))
 		errsChan := make(chan error, len(promises))
 
@@ -143,7 +139,7 @@ func ThenWithPool[A, B any](
 	resolve func(A) (B, error),
 	pool Pool,
 ) *Promise[B] {
-	return NewWithPool(ctx, func(resolveB func(B), reject func(error)) {
+	return NewWithPool(func(resolveB func(B), reject func(error)) {
 		result, err := p.Await(ctx)
 		if err != nil {
 			reject(err)
@@ -174,7 +170,7 @@ func CatchWithPool[T any](
 	reject func(err error) error,
 	pool Pool,
 ) *Promise[T] {
-	return NewWithPool(ctx, func(resolve func(T), internalReject func(error)) {
+	return NewWithPool(func(resolve func(T), internalReject func(error)) {
 		result, err := p.Await(ctx)
 		if err != nil {
 			internalReject(reject(err))
