@@ -31,6 +31,8 @@ func FromConcPool(p *conc.Pool) Pool {
 
 func FromAntsPool(p *ants.Pool) Pool {
 	return wrapFunc(func(f func()) {
-		p.Submit(f)
+		if err := p.Submit(f); err != nil {
+			panic(err)
+		}
 	})
 }
