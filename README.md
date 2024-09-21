@@ -52,5 +52,22 @@ func main() {
 
 ```
 
+## Benchmark
+
+```sh
+go test -bench=. -run=xxx -benchmem
+```
+
+The benchmark result on my Macbook M3 Pro:
+
+    goos: darwin
+    goarch: arm64
+    pkg: github.com/hoanguyenkh/promise4g
+    cpu: Apple M3 Pro
+    BenchmarkNewWithPool/default-11                   892462              1331 ns/op             352 B/op          8 allocs/op
+    BenchmarkNewWithPool/conc-11                      903475              1289 ns/op             352 B/op          8 allocs/op
+    BenchmarkNewWithPool/ants-11                      951216              1296 ns/op             352 B/op          8 allocs/op
+
+
 ## Referer
  1) https://github.com/chebyrash/promise
