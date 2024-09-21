@@ -15,7 +15,6 @@ type httpResponse1 struct {
 type httpResponse2 struct {
 	Username  string `json:"username"`
 	RequestId string `json:"requestId"`
-	err       error
 }
 
 func fakeHttp1(url string) (httpResponse1, error) {
