@@ -10,17 +10,17 @@ import (
 func main() {
 	ctx := context.Background()
 
-	p1 := promise4g.New(ctx, func(resolve func(string), reject func(error)) {
+	p1 := promise4g.New(func(resolve func(string), reject func(error)) {
 		time.Sleep(100 * time.Millisecond)
 		resolve("one")
 	})
 
-	p2 := promise4g.New(ctx, func(resolve func(string), reject func(error)) {
+	p2 := promise4g.New(func(resolve func(string), reject func(error)) {
 		time.Sleep(200 * time.Millisecond)
 		resolve("two")
 	})
 
-	p3 := promise4g.New(ctx, func(resolve func(string), reject func(error)) {
+	p3 := promise4g.New(func(resolve func(string), reject func(error)) {
 		time.Sleep(300 * time.Millisecond)
 		resolve("three")
 	})

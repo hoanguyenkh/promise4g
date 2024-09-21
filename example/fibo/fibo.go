@@ -26,7 +26,7 @@ func main() {
 
 	// Create promises for Fibonacci numbers
 	for _, n := range numbers {
-		tmp := promise4g.New(ctx, func(resolve func(int), reject func(error)) {
+		tmp := promise4g.New(func(resolve func(int), reject func(error)) {
 			time.Sleep(100 * time.Millisecond)
 			resolve(fibo(n))
 		})
