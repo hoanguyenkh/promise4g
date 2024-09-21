@@ -52,6 +52,8 @@ func main() {
 
 ```
 
+For more examples, you can check the `example` directory.
+
 ## Benchmark
 
 ```sh
