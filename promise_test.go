@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/panjf2000/ants/v2"
-	conc "github.com/sourcegraph/conc/pool"
 	"testing"
 	"time"
+
+	"github.com/panjf2000/ants/v2"
+	conc "github.com/sourcegraph/conc/pool"
 
 	"github.com/stretchr/testify/require"
 )
@@ -196,6 +197,22 @@ func TestPromise_Then(t *testing.T) {
 		require.Error(t, err)
 		require.Empty(t, result)
 	})
+
+	t.Run("ThenSuccessButThenPromiseError", func(t *testing.T) {
+		ctx := context.Background()
+		p := New(ctx, func(resolve func(int), reject func(error)) {
+			resolve(1)
+		})
+
+		thenPromise := Then(p, ctx, func(val int) (string, error) {
+			return "", errors.New("then promise error")
+		})
+
+		result, err := thenPromise.Await(ctx)
+		require.Error(t, err)
+		require.Equal(t, "then promise error", err.Error())
+		require.Empty(t, result)
+	})
 }
 
 func TestPromise_Catch(t *testing.T) {
@@ -270,4 +287,34 @@ func TestNewWithPool(t *testing.T) {
 			require.Equal(t, test.name, val)
 		})
 	}
+}
+
+func TestCheckAllConcurrent(t *testing.T) {
+
+	ctx := context.Background()
+	start := time.Now()
+
+	p1 := New(ctx, func(resolve func(string), reject func(error)) {
+		time.Sleep(100 * time.Millisecond)
+		resolve("one")
+	})
+
+	p2 := New(ctx, func(resolve func(string), reject func(error)) {
+		time.Sleep(200 * time.Millisecond)
+		resolve("two")
+	})
+
+	p3 := New(ctx, func(resolve func(string), reject func(error)) {
+		time.Sleep(300 * time.Millisecond)
+		resolve("three")
+	})
+
+	p := All(ctx, p1, p2, p3)
+	results, err := p.Await(ctx)
+	elapsed := time.Since(start)
+	fmt.Println(elapsed)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"one", "two", "three"}, results)
+	require.Less(t, elapsed, 350*time.Millisecond, "Promises did not run concurrently")
 }
