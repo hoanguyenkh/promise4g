@@ -318,3 +318,46 @@ func TestCheckAllConcurrent(t *testing.T) {
 	require.Equal(t, []string{"one", "two", "three"}, results)
 	require.Less(t, elapsed, 350*time.Millisecond, "Promises did not run concurrently")
 }
+
+func BenchmarkNewWithPool(b *testing.B) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name string
+		pool Pool
+	}{
+		{
+			name: "default",
+			pool: newDefaultPool(),
+		},
+		{
+			name: "conc",
+			pool: func() Pool {
+				return FromConcPool(conc.New())
+			}(),
+		},
+		{
+			name: "ants",
+			pool: func() Pool {
+				antsPool, err := ants.NewPool(0)
+				require.NoError(b, err)
+				return FromAntsPool(antsPool)
+			}(),
+		},
+	}
+
+	for _, test := range tests {
+		b.Run(test.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				p := NewWithPool(ctx, func(resolve func(string), reject func(error)) {
+					resolve(test.name)
+				}, test.pool)
+
+				val, err := p.Await(ctx)
+				require.NoError(b, err)
+				require.NotNil(b, val)
+				require.Equal(b, test.name, val)
+			}
+		})
+	}
+}
