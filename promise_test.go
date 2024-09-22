@@ -526,8 +526,6 @@ func TestPromise_MultipleInOrder(t *testing.T) {
 		})
 	}
 
-	results := make([]int, numPromises)
-
 	p := All(ctx, promises...)
 	results, err := p.Await(ctx)
 	elapsed := time.Since(start)
