@@ -361,3 +361,105 @@ func BenchmarkNewWithPool(b *testing.B) {
 		})
 	}
 }
+
+func TestPromise_Race(t *testing.T) {
+	t.Run("RaceWithFastestResolve", func(t *testing.T) {
+		ctx := context.Background()
+		p1 := New(func(resolve func(string), reject func(error)) {
+			time.Sleep(100 * time.Millisecond)
+			resolve("slow")
+		})
+		p2 := New(func(resolve func(string), reject func(error)) {
+			resolve("fast")
+		})
+		p3 := New(func(resolve func(string), reject func(error)) {
+			time.Sleep(50 * time.Millisecond)
+			resolve("medium")
+		})
+
+		racePromise := Race(ctx, p1, p2, p3)
+		result, err := racePromise.Await(ctx)
+		require.NoError(t, err)
+		require.Equal(t, "fast", result)
+	})
+
+	t.Run("RaceWithFastestReject", func(t *testing.T) {
+		ctx := context.Background()
+		p1 := New(func(resolve func(string), reject func(error)) {
+			time.Sleep(100 * time.Millisecond)
+			resolve("slow")
+		})
+		p2 := New(func(resolve func(string), reject func(error)) {
+			reject(errors.New("fast error"))
+		})
+		p3 := New(func(resolve func(string), reject func(error)) {
+			time.Sleep(50 * time.Millisecond)
+			resolve("medium")
+		})
+
+		racePromise := Race(ctx, p1, p2, p3)
+		_, err := racePromise.Await(ctx)
+		require.Error(t, err)
+		require.Equal(t, "fast error", err.Error())
+	})
+}
+
+func TestPromise_Finally(t *testing.T) {
+	t.Run("FinallyAfterResolve", func(t *testing.T) {
+		ctx := context.Background()
+		finallyExecuted := false
+		p := New(func(resolve func(string), reject func(error)) {
+			resolve("success")
+		})
+
+		finalPromise := Finally(p, ctx, func() {
+			finallyExecuted = true
+		})
+
+		result, err := finalPromise.Await(ctx)
+		require.NoError(t, err)
+		require.Equal(t, "success", result)
+		require.True(t, finallyExecuted)
+	})
+
+	t.Run("FinallyAfterReject", func(t *testing.T) {
+		ctx := context.Background()
+		finallyExecuted := false
+		p := New(func(resolve func(string), reject func(error)) {
+			reject(errors.New("error"))
+		})
+
+		finalPromise := Finally(p, ctx, func() {
+			finallyExecuted = true
+		})
+
+		_, err := finalPromise.Await(ctx)
+		require.Error(t, err)
+		require.True(t, finallyExecuted)
+	})
+}
+
+func TestPromise_Timeout(t *testing.T) {
+	t.Run("TimeoutBeforeResolve", func(t *testing.T) {
+		p := New(func(resolve func(string), reject func(error)) {
+			time.Sleep(200 * time.Millisecond)
+			resolve("too late")
+		})
+
+		timeoutPromise := Timeout(p, 100*time.Millisecond)
+		_, err := timeoutPromise.Await(context.Background())
+		require.Error(t, err)
+	})
+
+	t.Run("ResolveBeforeTimeout", func(t *testing.T) {
+		p := New(func(resolve func(string), reject func(error)) {
+			time.Sleep(50 * time.Millisecond)
+			resolve("on time")
+		})
+
+		timeoutPromise := Timeout(p, 100*time.Millisecond)
+		result, err := timeoutPromise.Await(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "on time", result)
+	})
+}
