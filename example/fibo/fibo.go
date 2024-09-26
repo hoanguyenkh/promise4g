@@ -22,7 +22,10 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
-		http.ListenAndServe(":8080", nil)
+		err := http.ListenAndServe(":8080", nil)
+		if err != nil {
+			panic(err)
+		}
 	}()
 	ctx := context.Background()
 	for {
