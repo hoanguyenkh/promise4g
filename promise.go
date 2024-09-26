@@ -10,10 +10,11 @@ import (
 
 // Promise represents a computation that will eventually be completed with a value of type T or an error.
 type Promise[T any] struct {
-	value atomic.Value
-	err   atomic.Value
-	done  chan struct{}
-	once  sync.Once
+	value     atomic.Value
+	err       atomic.Value
+	done      chan struct{}
+	once      sync.Once
+	startTime time.Time
 }
 
 // New creates a new Promise with the given task
@@ -29,11 +30,15 @@ func NewWithPool[T any](task func(resolve func(T), reject func(error)), pool Poo
 	if pool == nil {
 		panic("pool must not be nil")
 	}
+	incrementPromisesCreated()
+	incrementConcurrentPromises()
 	p := &Promise[T]{
-		done: make(chan struct{}),
+		done:      make(chan struct{}),
+		startTime: time.Now(),
 	}
 	pool.Go(func() {
 		defer p.handlePanic()
+		defer decrementConcurrentPromises()
 		task(p.resolve, p.reject)
 	})
 	return p
@@ -57,6 +62,7 @@ func (p *Promise[T]) Await(ctx context.Context) (T, error) {
 func (p *Promise[T]) resolve(value T) {
 	p.once.Do(func() {
 		p.value.Store(value)
+		observePromiseExecutionTime(time.Since(p.startTime).Seconds())
 		close(p.done)
 	})
 }
@@ -64,6 +70,7 @@ func (p *Promise[T]) resolve(value T) {
 func (p *Promise[T]) reject(err error) {
 	p.once.Do(func() {
 		p.err.Store(err)
+		observePromiseExecutionTime(time.Since(p.startTime).Seconds())
 		close(p.done)
 	})
 }
@@ -119,14 +126,15 @@ func AllWithPool[T any](ctx context.Context, pool Pool, promises ...*Promise[T])
 func Race[T any](ctx context.Context, promises ...*Promise[T]) *Promise[T] {
 	return NewWithPool(func(resolve func(T), reject func(error)) {
 		for _, p := range promises {
-			go func(p *Promise[T]) {
+			p := p // Create a new variable to avoid closure issues
+			defaultPool.Go(func() {
 				result, err := p.Await(ctx)
 				if err != nil {
 					reject(err)
 				} else {
 					resolve(result)
 				}
-			}(p)
+			})
 		}
 	}, defaultPool)
 }
