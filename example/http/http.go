@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/hoanguyenkh/promise4g"
 	"time"
+
+	"github.com/hoanguyenkh/promise4g"
 )
 
 type httpResponse1 struct {
@@ -37,24 +38,14 @@ func fakeHttp2(url string) (httpResponse2, error) {
 
 func main() {
 	ctx := context.Background()
-	p1 := promise4g.New(func(resolve func(any), reject func(error)) {
-		resp1, err := fakeHttp1("fakeHttp1")
-		if err != nil {
-			reject(err)
-		} else {
-			resolve(resp1)
-		}
+	t1 := time.Now()
+	p1 := promise4g.AsyncTask(func() (any, error) {
+		return fakeHttp1("fakeHttp1")
 	})
 
-	p2 := promise4g.New(func(resolve func(any), reject func(error)) {
-		resp1, err := fakeHttp2("fakeHttp2")
-		if err != nil {
-			reject(err)
-		} else {
-			resolve(resp1)
-		}
+	p2 := promise4g.AsyncTask(func() (any, error) {
+		return fakeHttp2("fakeHttp2")
 	})
-
 	p := promise4g.All(ctx, p1, p2)
 	results, err := p.Await(ctx)
 	if err != nil {
@@ -65,4 +56,7 @@ func main() {
 	res2 := results[1].(httpResponse2)
 	fmt.Println(res1.RequestId, res1.Message)
 	fmt.Println(res2.RequestId, res2.Username)
+
+	fmt.Println("total time: ", time.Since(t1))
+
 }
