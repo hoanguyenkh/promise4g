@@ -206,3 +206,16 @@ func Timeout[T any](p *Promise[T], d time.Duration) *Promise[T] {
 		}
 	}, defaultPool)
 }
+
+// AsyncTask creates a new Promise that executes the provided function asynchronously.
+// It resolves with the function's result or rejects with an error if the function fails.
+func AsyncTask[T any](fn func() (T, error)) *Promise[T] {
+	return New(func(resolve func(T), reject func(error)) {
+		resp, err := fn()
+		if err != nil {
+			reject(err)
+		} else {
+			resolve(resp)
+		}
+	})
+}
