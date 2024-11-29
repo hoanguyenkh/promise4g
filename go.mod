@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/panjf2000/ants/v2 v2.10.0
-	github.com/prometheus/client_golang v1.20.4
+	github.com/prometheus/client_golang v1.20.5
 	github.com/sourcegraph/conc v0.3.0
 	github.com/stretchr/testify v1.9.0
 )
